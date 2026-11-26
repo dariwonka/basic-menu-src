@@ -9,5 +9,6 @@ namespace Input {
 	uint32_t Pressed();                // went down since the last Poll
 	bool Repeat(uint32_t button);      // pressed, then auto-repeat while held
 
-	void Block(uint32_t mask);         // hide these buttons from the game (0 = none)
+	void Block(uint32_t mask);
+	uint32_t LiveButtons();            // latest buttons the game read (any thread)         // hide these buttons from the game (0 = none)
 }

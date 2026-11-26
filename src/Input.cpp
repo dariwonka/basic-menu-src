@@ -66,5 +66,6 @@ bool Repeat(uint32_t button)
 }
 
 void Block(uint32_t mask) { s_block.store(mask); }
+uint32_t LiveButtons() { return s_live.load(); }
 
 }

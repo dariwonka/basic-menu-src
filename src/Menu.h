@@ -20,6 +20,7 @@ struct Item {
 	char text[64];
 	char value[32];
 	bool disabled;
+	bool keepCase;
 };
 
 void SetRoot(const char* title, Page root);
@@ -29,8 +30,9 @@ bool IsOpen();
 bool Action(const char* text, bool disabled = false);
 bool Toggle(const char* text, bool* value, bool disabled = false);
 bool Int(const char* text, int* value, int min, int max, int step = 1, bool disabled = false);
-void Sub(const char* text, Page page);
+void Sub(const char* text, Page page, const char* title = nullptr);
 void Label(const char* text);
+void Text(const char* text);
 
 const char* Title();
 int ItemCount();

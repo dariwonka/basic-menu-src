@@ -31,6 +31,7 @@ namespace {
 		snprintf(it->text, sizeof(it->text), "%s", text);
 		it->value[0] = 0;
 		it->disabled = disabled;
+		it->keepCase = false;
 		return it;
 	}
 
@@ -125,12 +126,18 @@ bool Int(const char* text, int* value, int min, int max, int step, bool disabled
 	return changed;
 }
 
-void Sub(const char* text, Page page)
+void Sub(const char* text, Page page, const char*)
 {
 	Item* it = Add(text, false);
 	if (!it) return;
 	snprintf(it->value, sizeof(it->value), ">");
 	if (Current() && s_select) { s_next = page; s_nextTitle = text; }
+}
+
+void Text(const char* text)
+{
+	Item* it = Add(text, true);
+	if (it) { it->keepCase = true; it->disabled = false; }
 }
 
 void Label(const char* text)
