@@ -63,6 +63,14 @@ The prebuilt `.prx` in Releases is provided as-is and needs your own loader.
 | `Log.*`, `Notify.*`       | File log, system notifications                      |
 | `Font8x8.h`               | Built-in bitmap font                                |
 
+## Using this code
+
+You are free to use, change and build on this code. In return:
+
+- **Give credit.** Any project that uses this code, in whole or in part, must credit XeMo and link this repository in its README.
+- **Keep it public.** Projects built on this code must stay open source in a public repository. Do not make them private and do not release them closed-source.
+- **Do not sell it.** Do not sell this code, or anything built on it, and do not lock it behind a paywall or a key.
+
 ## Credits
 
 - Developed by **XeMo**.
