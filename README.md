@@ -67,24 +67,3 @@ The prebuilt `.prx` in Releases is provided as-is and needs your own loader.
 | `Vehicles.h`, `ItemNames.h`, `Locations.h` | Model, item and place tables                       |
 | `Log.*`, `Notify.*`       | File log, system notifications                                      |
 | `Font8x8.h`               | Built-in bitmap font                                                |
-
-## Using this code
-
-You are free to use, change and build on this code. In return:
-
-- **Give credit.** Any project that uses this code, in whole or in part, must credit XeMo and link this repository in its README.
-- **Keep it public.** Projects built on this code must stay open source in a public repository. Do not make them private and do not release them closed-source.
-- **Do not sell it.** Do not sell this code, or anything built on it, and do not lock it behind a paywall or a key.
-
-## Credits
-
-- Developed by **XeMo**.
-- `Font8x8.h`: public-domain 8x8 font by Daniel Hepper, based on Marcel Sondaar's public-domain VGA font.
-
-## Legal
-
-This is an unofficial fan project. It is **not affiliated with, endorsed, sponsored or approved by Rockstar Games, Take-Two Interactive or Sony Interactive Entertainment**. Grand Theft Auto, GTA, PlayStation and PS5 are trademarks of their respective owners and are used here for identification only.
-
-The repository contains no game code, game files, assets or copyrighted material from Rockstar Games, Take-Two Interactive or Sony. It is for use with a copy of the game you own, in offline story mode only. Do not use it online.
-
-The software is provided "as is", without warranty of any kind. Use it at your own risk. The authors are not responsible for any damage, data loss, bans or other consequences that come from using it.
