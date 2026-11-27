@@ -22,6 +22,7 @@ struct Item {
 	char value[32];
 	bool disabled;
 	bool keepCase;
+	bool warn;          // drawn in red (e.g. option not available right now)
 };
 
 void SetRoot(const char* title, Page root);
@@ -33,6 +34,7 @@ bool Toggle(const char* text, bool* value, bool disabled = false);
 bool Int(const char* text, int* value, int min, int max, int step = 1, bool disabled = false);
 void Sub(const char* text, Page page, const char* title = nullptr);
 void Label(const char* text);
+void Warn(bool on);                          // marks the item declared just before as a warning (red)
 void Text(const char* text);
 
 const char* Title();

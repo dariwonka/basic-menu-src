@@ -79,12 +79,16 @@ namespace {
 		return h;
 	}
 
-	char s_result[64] = "";
+	// written on the game thread, read by the menu thread: write the idle buffer, then flip
+	char s_resultBuf[2][64] = { "", "" };
+	std::atomic<int> s_resultIdx{0};
 	void Result(const char* fmt, ...) __attribute__((format(printf, 1, 2)));
 	void Result(const char* fmt, ...)
 	{
-		va_list a; va_start(a, fmt); vsnprintf(s_result, sizeof(s_result), fmt, a); va_end(a);
-		Log("%s", s_result);
+		int next = 1 - s_resultIdx.load();
+		va_list a; va_start(a, fmt); vsnprintf(s_resultBuf[next], sizeof(s_resultBuf[next]), fmt, a); va_end(a);
+		s_resultIdx.store(next);
+		Log("%s", s_resultBuf[next]);
 	}
 
 	// ---- text ----
@@ -503,12 +507,12 @@ namespace {
 	bool QueueDelete(uint8_t* ent)
 	{
 		uint32_t h = *(uint32_t*)(ent + 0x9C);
-		uint8_t* tc = Fn<uint8_t* (*)(uint32_t)>(0x22430)(h);
-		if (tc && (__atomic_fetch_or((uint32_t*)(tc + 0x6A4), 1u, __ATOMIC_SEQ_CST) & 1)) return false;
 		uint32_t cap = *(uint32_t*)At(0xCC5CD50);
 		uint32_t* ctr = (uint32_t*)At(0xCC5CD60);
 		uint64_t* buf = *(uint64_t**)At(0xCC5CD58);
 		if (!cap || !buf) return false;
+		uint8_t* tc = Fn<uint8_t* (*)(uint32_t)>(0x22430)(h);
+		if (tc && (__atomic_fetch_or((uint32_t*)(tc + 0x6A4), 1u, __ATOMIC_SEQ_CST) & 1)) return false;
 		uint32_t old, idx;
 		do { old = *ctr; idx = (old + 1) % cap; } while (!__sync_bool_compare_and_swap(ctr, old, idx));
 		uint8_t type = ent[0x30];
@@ -613,23 +617,38 @@ namespace {
 	}
 
 	// ---- fun ----
-	bool s_meteors = false, s_blackHole = false;
+	std::atomic<bool> s_meteors{false}, s_blackHole{false};
 	uint64_t s_lastMeteorMs = 0;
 	uint32_t s_rand = 0x1234567;
 	float Rand01() { s_rand = s_rand * 1664525u + 1013904223u; return (s_rand >> 8) / 16777216.0f; }
+
+	// sin for x in [-pi, pi] (folded to [-pi/2, pi/2], Taylor to x^9; error < 1e-5)
+	float Sin(float x)
+	{
+		const float kPi = 3.14159265f, kHalfPi = 1.57079633f;
+		if (x > kHalfPi) x = kPi - x; else if (x < -kHalfPi) x = -kPi - x;
+		float x2 = x * x;
+		return x * (1.0f - x2 / 6.0f * (1.0f - x2 / 20.0f * (1.0f - x2 / 42.0f * (1.0f - x2 / 72.0f))));
+	}
+	// cos for x in [0, 2*pi]
+	float Cos(float x)
+	{
+		float y = x + 1.57079633f;
+		if (y > 3.14159265f) y -= 6.28318531f;
+		return Sin(y);
+	}
 
 	void StepFun(uint8_t* ped, uint64_t now)
 	{
 		float px, py, pz;
 		EntPos(ped, &px, &py, &pz);
-		if (s_meteors && now - s_lastMeteorMs > 350) {
+		if (s_meteors.load() && now - s_lastMeteorMs > 350) {
 			s_lastMeteorMs = now;
 			float a = Rand01() * 6.2832f, d = 12.0f + Rand01() * 35.0f;
-			float c = 1.0f - a * a / 2 + a * a * a * a / 24, s = a - a * a * a / 6 + a * a * a * a * a / 120;   // rough cos/sin
-			if (a > 3.1416f) { float b = a - 3.1416f; c = -(1.0f - b * b / 2 + b * b * b * b / 24); s = -(b - b * b * b / 6 + b * b * b * b * b / 120); }
+			float c = Cos(a), s = Sin(a);
 			ExplodeAt(px + c * d, py + s * d, pz, (int)(Rand01() * 3) == 0 ? 7 : 1, false);
 		}
-		if (s_blackHole) {
+		if (s_blackHole.load()) {
 			const float* f = (const float*)(ped + 0x50);
 			float hx = px + f[0] * 25.0f, hy = py + f[1] * 25.0f, hz = pz + 8.0f;
 			uint8_t* mine = *(uint8_t* volatile*)At(kLocalPlayerVeh);
@@ -1055,8 +1074,8 @@ void RequestEngine(bool on) { s_reqEngine.store(on ? 1 : 0); }
 void RequestDoor(int part, bool open) { s_reqDoor.store((part & 0xFF) | (open ? 0x100 : 0)); }
 void RequestPaint(uint8_t r, uint8_t g, uint8_t b) { s_reqPaint.store(0x1000000u | (r << 16) | (g << 8) | b); }
 void RequestInvisible(bool vehicle, bool hide) { s_reqInvis.store((vehicle ? 1 : 0) | (hide ? 2 : 0)); }
-void SetMeteorShower(bool on) { s_meteors = on; }
-void SetBlackHole(bool on) { s_blackHole = on; }
+void SetMeteorShower(bool on) { s_meteors.store(on); }
+void SetBlackHole(bool on) { s_blackHole.store(on); }
 void RequestPedCannon() { s_reqCannon.store(true); }
 void RequestObjectDump() { s_reqObjDump.store(true); }
 
@@ -1096,7 +1115,7 @@ void RequestSetCash(bool stash, int64_t amount, bool add) { s_reqSetAmount.store
 int OutfitCount() { return s_outfitCount.load(); }
 uint32_t OutfitHash(int i) { return i >= 0 && i < s_outfitCount.load() ? s_outfits[i].outfit : 0; }
 uint32_t OutfitVariant(int i) { return i >= 0 && i < s_outfitCount.load() ? s_outfits[i].variant : 0; }
-const char* LastResult() { return s_result; }
+const char* LastResult() { return s_resultBuf[s_resultIdx.load()]; }
 const char* ItemLabel(uint32_t h)
 {
 	for (int i = 0; i < s_itemNames; i++) if (s_itemHash[i] == h) return s_itemName[i];

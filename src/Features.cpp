@@ -15,20 +15,13 @@ namespace {
 	bool g_neverWanted = false;
 	bool g_freezeTime = false;
 	int g_hour = 12;
-	int g_vehicle = 0;
 	int g_wanted = 0;
 	int g_model = 0;
-	bool g_god = false, g_spawnInside = false, g_armour = false, g_superJump = false, g_vehGod = false, g_infClip = false;
-	bool g_groups[(int)Engine::FlagGroup::Count] = {};
-	int g_item = 0, g_cashTarget = 0;
-	int g_seat = -1, g_timeScale = 100;
-	bool g_emptyCity = false;
-	int g_style = 3;
-	int g_flag = 0, g_locCat = 0, g_locIdx = 0, g_door = 0, g_paint = 0, g_wantedLockLvl = -1;
-	bool g_vehInvis = false, g_invis = false, g_meteors = false, g_blackHole = false;
-	bool g_infAmmo = false;
-	int g_extra = 0, g_outfit = 0, g_weather = 0, g_explosion = 0, g_location = 0;
-	bool g_tests[(int)Engine::Test::Count] = {};
+	bool g_god = false, g_superJump = false, g_vehGod = false, g_infClip = false;
+	int g_item = 0;
+	int g_locCat = 0, g_locIdx = 0, g_door = 0;
+	bool g_meteors = false, g_blackHole = false;
+	int g_weather = 0, g_explosion = 0, g_location = 0;
 
 	bool Off() { return !Engine::Ready(); }
 
@@ -61,8 +54,8 @@ namespace {
 		const char* display = Extras::VehicleLabel(g_model);
 		if (display[0]) snprintf(label, sizeof(label), "%s (%s)", display, kVehicleModels[g_model].name);
 		else snprintf(label, sizeof(label), "Model: %s", kVehicleModels[g_model].name);
-		bool picked = Menu::Int(label, &g_model, 0, kVehicleModelCount - 1, 1, Off());
-		(void)picked;
+		Menu::Int(label, &g_model, 0, kVehicleModelCount - 1, 1, Off());
+		if (!Off()) Menu::Warn(!Engine::ModelAvailable(kVehicleModels[g_model].hash));   // red = not registered, spawn won't work
 		if (Menu::Action("Spawn selected vehicle", Off())) Engine::Queue(Engine::Op::SpawnModel, g_model);
 		if (Menu::Action("Quick: sanchez", Off())) Engine::Queue(Engine::Op::SpawnModel, IndexOf("sanchez"));
 		if (Menu::Toggle("Vehicle god mode", &g_vehGod, Off())) Engine::SetVehicleGod(g_vehGod);
@@ -84,13 +77,6 @@ namespace {
 		Menu::Label(sl);
 		if (Menu::Action("Fill stash ($20,000)", Off())) Extras::RequestSetCash(true, 20000, false);
 		if (Menu::Action("Fill cash on hand ($19,999)", Off())) Extras::RequestSetCash(false, 19999, false);
-		Menu::Label(Extras::LastResult());
-		return;
-		char line[64];
-		long long cash = (long long)Extras::Cash();
-		if (cash >= 0) snprintf(line, sizeof(line), "Cash on hand: $%lld", cash);
-		else snprintf(line, sizeof(line), "Cash on hand: unknown");
-		Menu::Label(line);
 		Menu::Label(Extras::LastResult());
 	}
 
@@ -191,15 +177,6 @@ namespace {
 	}
 
 
-	void CreditsMenu()
-	{
-		Menu::Text("Basic Menu");
-		Menu::Text("Developed by XeMo");
-		Menu::Text("Discord: discord.gg/J7uw733jUc");
-		Menu::Text("Ko-fi: ko-fi.com/xemonet");
-		Menu::Text("Free - donations are optional");
-	}
-
 	void RootMenu()
 	{
 		const char* why = Engine::LockReason();
@@ -217,7 +194,6 @@ namespace {
 		Menu::Sub("Fun", FunMenu);
 		Menu::Sub("Money", MoneyMenu);
 		Menu::Sub("Items", ItemsMenu);
-		Menu::Sub("Credits", CreditsMenu);
 	}
 }
 

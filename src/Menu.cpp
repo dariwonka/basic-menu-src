@@ -34,6 +34,7 @@ namespace {
 		it->value[0] = 0;
 		it->disabled = disabled;
 		it->keepCase = false;
+		it->warn = false;
 		return it;
 	}
 
@@ -145,6 +146,11 @@ void Text(const char* text)
 void Label(const char* text)
 {
 	Add(text, true);
+}
+
+void Warn(bool on)
+{
+	if (s_count > 0) s_items[s_count - 1].warn = on;
 }
 
 const char* Title() { return s_stack[s_depth].title; }

@@ -56,6 +56,9 @@ uint32_t ItemHash(int index);
 const char* ItemName(uint32_t hash);   // nullptr if unknown
 uint32_t LastGiveResult();
 
+// true if the game currently has this 64-bit vehicle model registered (so a spawn can work)
+bool ModelAvailable(uint64_t hash);
+
 // Live values for the Status page (updated on the game thread).
 struct Status {
 	uint64_t ped;

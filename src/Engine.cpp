@@ -328,8 +328,8 @@ namespace {
 		m[12] = x - 32.0f * sx;
 		m[13] = y - 32.0f * sy;
 		m[14] = z;
-		((int16_t*)&m[15])[0] = (int16_t)sx;
-		((int16_t*)&m[15])[1] = (int16_t)sy;
+		int16_t cell[2] = { (int16_t)sx, (int16_t)sy };
+		memcpy(&m[15], cell, sizeof(cell));
 		// same as the game's set-rotation handler: under the script lock, no post-spawn placement
 		Fn<Obj_t>(kLock)((uint8_t*)(g_base + kScriptLock));
 		SetMatrix_t set = *(SetMatrix_t*)(*(uint8_t**)ent + kVtSetMatrix);
@@ -377,9 +377,12 @@ namespace {
 		m.ent = ent; m.x = x; m.y = y; m.z = z; m.ms = now;
 	}
 
+	uint8_t* CurrentVehicle(uint8_t* ped);
+
 	void VehiclePush(bool jump)
 	{
-		uint8_t* veh = *(uint8_t* volatile*)(g_base + kLocalPlayerVeh);
+		uint8_t* ped = PlayerPed();
+		uint8_t* veh = ped ? CurrentVehicle(ped) : nullptr;   // not a last-used car parked somewhere else
 		if (!veh || g_vehMotion.ent != veh) return;
 		const Motion& m = g_vehMotion;
 		if (jump) {
@@ -814,7 +817,7 @@ namespace {
 
 	// Falls kill by height: fallen = fall start z (0x113B0(h)+0xB58) - landing z, against the ped's fatal height.
 	float g_fallSave[3] = { 0, 0, 0 }, g_tunSave[2] = { 0, 0 };
-	bool g_fallSaved = false;
+	bool g_fallSaved = false, g_c51Saved = false;
 	uint64_t g_lastFallHeightMs = 0;
 
 	void StepNoFall(uint8_t* ped, bool on, uint64_t now)
@@ -830,7 +833,7 @@ namespace {
 				*(float*)(f + 0xB58) = z;                         // the fall always "started" here
 			}
 			if (!g_fallSaved) {
-				if (c51) for (int i = 0; i < 3; i++) g_fallSave[i] = *(float*)(c51 + 0xC80 + 4 * i);
+				if (c51) { for (int i = 0; i < 3; i++) g_fallSave[i] = *(float*)(c51 + 0xC80 + 4 * i); g_c51Saved = true; }
 				g_tunSave[0] = *tun0; g_tunSave[1] = *tun1;
 				g_fallSaved = true;
 			}
@@ -840,9 +843,10 @@ namespace {
 				*tun0 = 100000.0f; *tun1 = 200000.0f;
 			}
 		} else if (g_fallSaved) {
-			if (c51) for (int i = 0; i < 3; i++) *(float*)(c51 + 0xC80 + 4 * i) = g_fallSave[i];
+			if (c51 && g_c51Saved) for (int i = 0; i < 3; i++) *(float*)(c51 + 0xC80 + 4 * i) = g_fallSave[i];
 			*tun0 = g_tunSave[0]; *tun1 = g_tunSave[1];
 			g_fallSaved = false;
+			g_c51Saved = false;
 		}
 	}
 
@@ -1016,6 +1020,12 @@ void LocationText(int i, char* out, int cap)
 int ItemCount() { return g_itemCount.load(); }
 uint32_t ItemHash(int index) { return index >= 0 && index < g_itemCount.load() ? g_items[index] : 0; }
 uint32_t LastGiveResult() { return g_lastGive.load(); }
+
+bool ModelAvailable(uint64_t hash)
+{
+	uint32_t v;
+	return g_gateOk && LookupModel(hash, &v);
+}
 
 const char* ItemName(uint32_t hash)
 {

@@ -49,6 +49,7 @@ namespace {
 	const uint32_t kHeaderBg = Rgb(8, 8, 10),   kAccent = Rgb(0, 200, 120);
 	const uint32_t kRowBg    = Rgb(22, 22, 26), kRowAlt = Rgb(28, 28, 33);
 	const uint32_t kText     = Rgb(235, 235, 235), kTextDim = Rgb(110, 110, 118), kTextSel = Rgb(6, 6, 8);
+	const uint32_t kWarn     = Rgb(255, 70, 70), kWarnSel = Rgb(140, 0, 0);
 
 	struct Snapshot {
 		bool open;
@@ -96,7 +97,7 @@ namespace {
 		const Menu::Item& it = s.items[r];
 		bool sel = s.first + (int)r == s.selected;
 		if (sel) bg = kAccent;
-		uint32_t fg = it.disabled ? kTextDim : (sel ? kTextSel : kText);
+		uint32_t fg = it.warn ? (sel ? kWarnSel : kWarn) : it.disabled ? kTextDim : (sel ? kTextSel : kText);
 		uint32_t ty = kRowsTop + r * kRowH + (kRowH - kGlyph) / 2;
 		if (TextAt(it.text, s.textLen[r], kPadX, ty, x, y)) return fg;
 		if (s.valueLen[r] && TextAt(it.value, s.valueLen[r], s.valueX[r], ty, x, y)) return fg;

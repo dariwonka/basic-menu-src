@@ -26,7 +26,6 @@ Story-mode menu for GTA VI on a jailbroken PS5.
 | Fun       | Explosions, clone yourself, meteor shower, black hole, explode all vehicles, kill all peds, delete nearby vehicles / peds |
 | Money     | Fill stash, fill cash on hand                                                             |
 | Items     | Give any item from the game's give table (weapons and more)                               |
-| Credits   | Developer, Discord, Ko-fi                                                                 |
 
 ## Controls
 
